@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDU YODHA | Learn & Conquer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Confetti Script for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="https://yt3.googleusercontent.com/4Jr2MGRlSi89rRiTJNj4vpPRKEE2-HTlY7seiT3fW1PiVtXWC1_RR54V57LNfspWQv_DwaZwN7k=s900-c-k-c0x00ffffff-no-rj" alt="EDU YODHA Logo" class="brand-logo">
+            <span>EDU YODHA</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Home</a>
+            <a href="#videos-section">Videos</a>
+            <a href="#" id="gopro-nav-btn" class="gopro-btn"><i data-lucide="gem"></i> GoPro / Premium</a>
+            <a href="https://youtube.com/@eduyodha?si=iEdRQPXnEz8SGmNF" target="_blank" class="social-link" style="color: #ff0000;"><i data-lucide="youtube"></i> YouTube</a>
+            <a href="https://whatsapp.com/channel/0029Vb27q0JKwqSbZewkPh1r" target="_blank" class="social-link whatsapp"><i data-lucide="message-circle"></i> WhatsApp</a>
+            <a href="https://www.instagram.com/engineering_in_karnataka?igsh=MWJjaG5yZXhlNmdnaQ==" target="_blank" class="social-link instagram"><i data-lucide="instagram"></i> Instagram</a>
+        </div>
+        <div class="mobile-menuBtn">
+             <i data-lucide="menu"></i>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <div class="badge">For VTU & KCET Students</div>
+            <h1>Empowering Engineering Students in Karnataka</h1>
+            <p>Your ultimate destination for Machine Learning, KCET 2026 strategies, and VTU updates. Master your syllabus with high-quality video tutorials.</p>
+            <a href="#videos-section" class="cta-btn">Start Learning <i data-lucide="arrow-right"></i></a>
+        </div>
+        <div class="hero-image">
+            <div class="glass-card">
+                <i data-lucide="play-circle" class="play-icon"></i>
+                <p>100+ Free Video Lectures</p>
+            </div>
+        </div>
+    </header>
+
+    <main id="videos-section" class="videos-container">
+        <div class="section-header">
+            <h2>Explore Our Playlists</h2>
+            <p>Select a category to find specialized video content.</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search for videos, topics..." autocomplete="off">
+                <div id="search-recommendations" class="recommendations-list" style="display: none;"></div>
+            </div>
+            <select id="filter-dropdown" class="filter-dropdown">
+                <option value="All">All Videos</option>
+                <option value="Watched">Completed</option>
+                <option value="Unwatched">Unwatched</option>
+            </select>
+        </div>
+
+        <div class="categories" id="category-container">
+            <button class="category-btn active" data-category="All">All Videos</button>
+            <!-- Categories injected dynamically here -->
+        </div>
+
+        <!-- Progress Tracking -->
+        <div class="progress-section" id="progress-section" style="display: none;">
+            <div class="progress-header">
+                <span id="progress-text">0% Completed</span>
+                <button id="claim-cert-btn" class="claim-btn" style="display: none;">
+                    <i data-lucide="award"></i> Claim Certificate
+                </button>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+        </div>
+
+        <div class="video-grid" id="video-grid">
+            <!-- Videos injected dynamically here -->
+            <div class="loader-container" id="loader">
+                <i data-lucide="loader" class="spin"></i> Loading videos...
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="brand">
+                 <h3>EDU YODHA</h3>
+                 <p>Guiding VTU engineers to success.</p>
+            </div>
+            <div class="socials">
+                <a href="https://youtube.com/@eduyodha?si=iEdRQPXnEz8SGmNF" target="_blank" title="YouTube"><i data-lucide="youtube"></i></a>
+                <a href="https://www.instagram.com/engineering_in_karnataka?igsh=MWJjaG5yZXhlNmdnaQ==" target="_blank" title="Instagram"><i data-lucide="instagram"></i></a>
+                <a href="https://whatsapp.com/channel/0029Vb27q0JKwqSbZewkPh1r" target="_blank" title="WhatsApp Channel"><i data-lucide="message-circle"></i></a>
+            </div>
+            <p class="copyright">&copy; 2026 EDU YODHA. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Certificate Modal -->
+    <div id="cert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button id="close-modal" class="close-btn"><i data-lucide="x"></i></button>
+            <div id="name-prompt-section">
+                <h2>Congratulations! 🎉</h2>
+                <p>You have completed the entire playlist. Enter your full name below to claim your certificate.</p>
+                <input type="text" id="student-name-input" placeholder="e.g. John Doe" class="cert-input">
+                <button id="generate-cert-btn" class="cta-btn">Generate My Certificate</button>
+            </div>
+
+            <div id="certificate-display" style="display: none;">
+                <div class="cert-canvas" id="cert-canvas">
+                    <div class="cert-border">
+                        <h1 class="cert-title">Certificate of Completion</h1>
+                        <p class="cert-subtitle">This certificate is proudly awarded to</p>
+                        <h2 class="cert-student-name" id="cert-student-name">Student Name</h2>
+                        <p class="cert-text">for successfully completing the <strong id="cert-playlist-name">Playlist</strong> videos on the EDU YODHA platform.</p>
+                        
+                        <div class="cert-footer">
+                            <div class="cert-signature">
+                                <span>EDU YODHA</span>
+                                <hr>
+                                <p>Platform Administrator</p>
+                            </div>
+                            <div class="cert-badge">
+                                <i data-lucide="award" style="width: 50px; height: 50px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="print-cert-btn" class="cta-btn secondary" style="margin-top: 1.5rem;">Print or Save as PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mock Payment Gateway Modal -->
+    <div id="payment-modal" class="modal-overlay">
+        <div class="modal-content payment-box" style="max-width: 450px;">
+            <button id="close-payment-modal" class="close-btn" style="color:#000;"><i data-lucide="x"></i></button>
+            <div class="payment-header">
+                 <h3>EDU YODHA PRO 💎</h3>
+                 <p>Unlock Upcoming Premium Videos & Private Chats</p>
+                 <h1 style="color:#6b46c1; margin: 1rem 0;">₹499 <span style="font-size:1rem; color:#888;">/ year</span></h1>
+            </div>
+            <div class="payment-mock-form">
+                <input type="text" placeholder="Card Number (mock: 4242 4242 4242 4242)" class="cert-input" style="color:#000; background:#f5f5f5;" id="mock-cc">
+                <button id="submit-payment-btn" class="cta-btn" style="width: 100%;">Pay Securely</button>
+            </div>
+            <p style="color: #666; font-size:0.8rem; margin-top: 1rem;">This is a mock Razorpay/Stripe simulation wrapper.</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
