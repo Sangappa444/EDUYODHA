@@ -1,74 +1,80 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-const dbPath = path.resolve(__dirname, 'eduyodha.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error("Error opening database " + err.message);
-    } else {
-        console.log("Connected to the SQLite database.");
-        
-        // Create Videos Table
-        db.run(`CREATE TABLE IF NOT EXISTS videos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            youtube_id TEXT NOT NULL,
-            category TEXT NOT NULL,
-            description TEXT
-        )`, (err) => {
-            if (err) {
-                console.error("Error creating videos table: " + err.message);
-            } else {
-                console.log("Videos table ready.");
-                
-                // Create Comments Table
-                db.run(`CREATE TABLE IF NOT EXISTS comments (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    video_id INTEGER NOT NULL,
-                    student_name TEXT NOT NULL,
-                    comment_text TEXT NOT NULL,
-                    date_posted DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`, (err) => {
-                    if (err) console.error("Error creating comments table: " + err.message);
-                    else console.log("Comments table ready.");
-                });
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/eduyodha_local";
 
-                seedData(); // Populate initial videos
-            }
-        });
-    }
+mongoose.connect(MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB database.");
+    seedData(); // Populate initial videos if collection is empty
+  })
+  .catch(err => {
+    console.error("Error connecting to MongoDB: ", err.message);
+  });
+
+// Create Mongoose Schemas
+const videoSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    youtube_id: { type: String, required: true },
+    category: { type: String, required: true },
+    description: { type: String }
 });
 
-function seedData() {
-    db.get("SELECT COUNT(*) as count FROM videos", (err, row) => {
-        if (!err && row.count === 0) {
+const commentSchema = new mongoose.Schema({
+    video_id: { type: String, required: true },
+    student_name: { type: String, required: true },
+    comment_text: { type: String, required: true },
+    date_posted: { type: Date, default: Date.now }
+});
+
+// Create Mongoose Models
+const Video = mongoose.model('Video', videoSchema);
+const Comment = mongoose.model('Comment', commentSchema);
+
+async function seedData() {
+    try {
+        const count = await Video.countDocuments();
+        if (count === 0) {
             console.log("Seeding initial video data...");
-            const stmt = db.prepare("INSERT INTO videos (title, youtube_id, category, description) VALUES (?, ?, ?, ?)");
             
             const videos = [
-                ["Machine learning|what is machine learning", "iVZFg84Ygks", "Machine Learning", "Introduction, definition and example in Kannada"],
-                ["Why do we need ML|importance|popularity", "e4J9Lhnnbho", "Machine Learning", "Why Machine Learning became popular and its importance"],
-                ["Knowledge pyramid|Machine Learning|DIKW model", "pAn_qQ2-ATE", "Machine Learning", "Data to Information to Knowledge to Wisdom in Kannada"],
-                ["Artificial intelligence, neural network, deep learning", "yvwj1w0vk1k", "Machine Learning", "Relation of ML to other technologies"],
-                ["How ML related to Data science, analytics, pattern recognition", "PeXv34yMDvo", "Machine Learning", "Important relationships in Data Science"],
-                ["Types of Machine learning|fundamentals|basics", "nnLyVa_HeUY", "Machine Learning", "Core concepts and basics in EDU YODHA"],
-                ["Supervised Learning|Types of Machine Learning", "_YPF5uwWttI", "Machine Learning", "Basic concepts of Supervised Learning"],
-                ["Unsupervised learning|Types of Machine Learning", "tOgTJL4D1Ig", "Machine Learning", "Concepts and fundamentals of Unsupervised ML"],
-                ["Semi-supervised and reinforcement learning", "ymDQ8hxbLT4", "Machine Learning", "Understanding Reinforcement and Semi-supervised ML"],
-                ["Challenges of Machine Learning", "oYDKewCVmLY", "Machine Learning", "Overfitting, Underfitting, Bias & Variance"],
-                ["CRISP-DM Process Explained", "eyWPaManDA4", "Machine Learning", "Simple Friendship Example | ML process"]
+                { title: "Machine learning|what is machine learning", youtube_id: "iVZFg84Ygks", category: "Machine Learning", description: "Introduction, definition and example in Kannada" },
+                { title: "Why do we need ML|importance|popularity", youtube_id: "e4J9Lhnnbho", category: "Machine Learning", description: "Why Machine Learning became popular and its importance" },
+                { title: "Knowledge pyramid|Machine Learning|DIKW model", youtube_id: "pAn_qQ2-ATE", category: "Machine Learning", description: "Data to Information to Knowledge to Wisdom in Kannada" },
+                { title: "Artificial intelligence, neural network, deep learning", youtube_id: "yvwj1w0vk1k", category: "Machine Learning", description: "Relation of ML to other technologies" },
+                { title: "How ML related to Data science, analytics, pattern recognition", youtube_id: "PeXv34yMDvo", category: "Machine Learning", description: "Important relationships in Data Science" },
+                { title: "Types of Machine learning|fundamentals|basics", youtube_id: "nnLyVa_HeUY", category: "Machine Learning", description: "Core concepts and basics in EDU YODHA" },
+                { title: "Supervised Learning|Types of Machine Learning", youtube_id: "_YPF5uwWttI", category: "Machine Learning", description: "Basic concepts of Supervised Learning" },
+                { title: "Unsupervised learning|Types of Machine Learning", youtube_id: "tOgTJL4D1Ig", category: "Machine Learning", description: "Concepts and fundamentals of Unsupervised ML" },
+                { title: "Semi-supervised and reinforcement learning", youtube_id: "ymDQ8hxbLT4", category: "Machine Learning", description: "Understanding Reinforcement and Semi-supervised ML" },
+                { title: "Challenges of Machine Learning", youtube_id: "oYDKewCVmLY", category: "Machine Learning", description: "Overfitting, Underfitting, Bias & Variance" },
+                { title: "CRISP-DM Process Explained", youtube_id: "eyWPaManDA4", category: "Machine Learning", description: "Simple Friendship Example | ML process" }
             ];
 
-            const newPlaylists = require('./playlist_output.json');
-            const allVideos = [...videos, ...newPlaylists];
+            let newPlaylists = [];
+            try {
+                const fs = require('fs');
+                if (fs.existsSync(require('path').resolve(__dirname, 'playlist_output.json'))) {
+                    const rawData = require('./playlist_output.json');
+                    newPlaylists = rawData.map(item => ({
+                        title: item[0],
+                        youtube_id: item[1],
+                        category: item[2],
+                        description: item[3]
+                    }));
+                }
+            } catch (e) {
+                console.error("Could not load playlist_output.json:", e);
+            }
 
-            allVideos.forEach(video => {
-                stmt.run(video);
-            });
-            stmt.finalize();
+            const allVideos = [...videos, ...newPlaylists];
+            
+            await Video.insertMany(allVideos);
             console.log("Seeding complete.");
         }
-    });
+    } catch (err) {
+        console.error("Error during seeding:", err);
+    }
 }
 
-module.exports = db;
+module.exports = { Video, Comment };

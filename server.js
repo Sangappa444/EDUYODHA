@@ -2,7 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
-const db = require('./database');
+require('dotenv').config();
+const { Video, Comment } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,48 +13,73 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API to get all video categories
-app.get('/api/categories', (req, res) => {
-    db.all("SELECT DISTINCT category FROM videos", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows.map(row => row.category));
-    });
+app.get('/api/categories', async (req, res) => {
+    try {
+        const categories = await Video.distinct('category');
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // API to get videos (optional filter by category)
-app.get('/api/videos', (req, res) => {
-    const category = req.query.category;
-    let query = "SELECT * FROM videos";
-    let params = [];
+app.get('/api/videos', async (req, res) => {
+    try {
+        const category = req.query.category;
+        let query = {};
 
-    if (category && category !== 'All') {
-        query += " WHERE category = ?";
-        params.push(category);
+        if (category && category !== 'All') {
+            query.category = category;
+        }
+
+        const videos = await Video.find(query);
+        // Map _id to id so frontend JS loop isn't broken
+        const formattedVideos = videos.map(v => ({
+            id: v._id.toString(),
+            title: v.title,
+            youtube_id: v.youtube_id,
+            category: v.category,
+            description: v.description
+        }));
+        res.json(formattedVideos);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    db.all(query, params, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
 });
 
 // GET Comments for a video
-app.get('/api/comments/:video_id', (req, res) => {
-    db.all("SELECT * FROM comments WHERE video_id = ? ORDER BY date_posted DESC", [req.params.video_id], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+app.get('/api/comments/:video_id', async (req, res) => {
+    try {
+        const comments = await Comment.find({ video_id: req.params.video_id })
+                                      .sort({ date_posted: -1 });
+        const formattedComments = comments.map(c => ({
+            id: c._id.toString(),
+            video_id: c.video_id,
+            student_name: c.student_name,
+            comment_text: c.comment_text,
+            date_posted: c.date_posted
+        }));
+        res.json(formattedComments);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // POST a new comment
-app.post('/api/comments', (req, res) => {
+app.post('/api/comments', async (req, res) => {
     const { video_id, student_name, comment_text } = req.body;
     if (!video_id || !comment_text) return res.status(400).json({ error: "Missing fields" });
 
-    db.run("INSERT INTO comments (video_id, student_name, comment_text) VALUES (?, ?, ?)", 
-        [video_id, student_name || "Anonymous Student", comment_text], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID, success: true });
-    });
+    try {
+        const newComment = await Comment.create({
+            video_id,
+            student_name: student_name || "Anonymous Student",
+            comment_text
+        });
+        res.json({ id: newComment._id.toString(), success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.listen(PORT, () => {
