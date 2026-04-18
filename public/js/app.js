@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let url = '/api/videos';
                 if (category !== 'All') url += `?category=${encodeURIComponent(category)}`;
                 const res = await fetch(url);
-                window.currentVideos = await res.json();
+                const data = await res.json();
+                window.currentVideos = Array.isArray(data) ? data : [];
             }
             
             loader.style.display = 'none';
