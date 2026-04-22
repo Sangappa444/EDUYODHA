@@ -201,15 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="video-title">${video.title}</h3>
                     <p class="video-desc">${video.description}</p>
                     
-                    <!-- Feature Action Bar -->
                     <div class="video-actions">
-                        <button class="action-toggle-btn" onclick="toggleComments(${video.id})">
+                        <button class="action-toggle-btn" onclick="toggleComments('${video.id}')">
                             <i data-lucide="message-square"></i> Comments
                         </button>
-                        <button class="action-toggle-btn" onclick="toggleNotebook(${video.id})">
+                        <button class="action-toggle-btn" onclick="toggleNotebook('${video.id}')">
                             <i data-lucide="pen-tool"></i> Take Notes
                         </button>
-                        <button class="action-toggle-btn share-btn-action" onclick="shareVideo(${video.id}, '${video.title.replace(/'/g, "\\'")}')">
+                        <button class="action-toggle-btn share-btn-action" onclick="shareVideo('${video.id}', '${video.title.replace(/'/g, "\\'")}')">
                             <i data-lucide="send"></i> Share
                         </button>
                     </div>
@@ -221,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="comment-input-area">
                             <input type="text" id="comment-input-${video.id}" placeholder="Ask a question or comment...">
-                            <button onclick="postComment(${video.id})">Post</button>
+                            <button onclick="postComment('${video.id}')">Post</button>
                         </div>
                     </div>
 
@@ -230,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <textarea id="notebook-input-${video.id}" class="notebook-textarea" placeholder="Type your personal study notes here... They will auto-save!"></textarea>
                         <div class="notebook-toolbar">
                             <span id="notebook-status-${video.id}">Saved securely in browser.</span>
-                            <button class="btn-download-notes" onclick="downloadNotes(${video.id}, '${video.title.replace(/'/g, "\\'")}')">
+                            <button class="btn-download-notes" onclick="downloadNotes('${video.id}', '${video.title.replace(/'/g, "\\'")}')">
                                 <i data-lucide="download"></i> Download .txt
                             </button>
                         </div>
@@ -333,9 +332,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.shareVideo = function(vid, title) {
-        // Mock share logic integrating WhatsApp Web
-        const shareText = encodeURIComponent(`Hey! I'm studying using this awesome video on EDU YODHA: "${title}"\n\nCheck it out here: http://localhost:3000`);
-        window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+        const shareData = {
+            title: 'EDU YODHA - ' + title,
+            text: `Hey! I'm studying using this awesome video on EDU YODHA: "${title}"\n\nCheck it out here: `,
+            url: window.location.href
+        };
+        
+        if (navigator.share) {
+            navigator.share(shareData).catch((err) => console.log('Error sharing:', err));
+        } else {
+            // Fallback: Copy to clipboard
+            navigator.clipboard.writeText(shareData.text + shareData.url)
+                .then(() => alert("Link copied to clipboard!"))
+                .catch(err => {
+                    console.error('Error copying text: ', err);
+                    // Ultimate fallback
+                    const shareText = encodeURIComponent(shareData.text + shareData.url);
+                    window.open(`https://api.whatsapp.com/send?text=${shareText}`, '_blank');
+                });
+        }
     };
 
     function attachInteractions() {
