@@ -28,9 +28,37 @@ const commentSchema = new mongoose.Schema({
     date_posted: { type: Date, default: Date.now }
 });
 
+const noteSchema = new mongoose.Schema({
+    user_id: { type: String, required: true },
+    video_id: { type: String, required: true },
+    note_text: { type: String, default: "" },
+    updated_at: { type: Date, default: Date.now }
+});
+
+const testScoreSchema = new mongoose.Schema({
+    user_id: { type: String, required: true },
+    student_name: { type: String, required: true },
+    subject: { type: String, required: true },
+    score: { type: Number, required: true },
+    total: { type: Number, required: true },
+    date_taken: { type: Date, default: Date.now }
+});
+
+const jobSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    company: { type: String, required: true },
+    location: { type: String, required: true },
+    stipend: { type: String, required: true },
+    apply_link: { type: String, required: true },
+    created_at: { type: Date, default: Date.now }
+});
+
 // Create Mongoose Models
 const Video = mongoose.model('Video', videoSchema);
 const Comment = mongoose.model('Comment', commentSchema);
+const Note = mongoose.model('Note', noteSchema);
+const TestScore = mongoose.model('TestScore', testScoreSchema);
+const Job = mongoose.model('Job', jobSchema);
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -87,4 +115,4 @@ async function seedData() {
     }
 }
 
-module.exports = { Video, Comment, User };
+module.exports = { Video, Comment, User, Note, TestScore, Job };

@@ -22,8 +22,10 @@
             <a href="#videos-section">Courses</a>
             <a href="#mock-tests-section">Mock Tests</a>
             <a href="#job-alerts-section">Jobs</a>
+            <a href="#leaderboard-section">Leaderboard</a>
             <a href="#promotions-section">Colleges</a>
             <a href="#" id="auth-nav-btn" class="gopro-btn" style="background: var(--text); color: var(--background);"><i data-lucide="user"></i> Sign In</a>
+            <a href="#" id="dashboard-nav-btn" style="display:none; color: var(--primary); font-weight:bold;"><i data-lucide="layout-dashboard"></i> Dashboard</a>
             <a href="#" id="gopro-nav-btn" class="gopro-btn"><i data-lucide="gem"></i> GoPro / Premium</a>
             <a href="https://youtube.com/@eduyodha?si=iEdRQPXnEz8SGmNF" target="_blank" class="social-link" style="color: #ff0000;"><i data-lucide="youtube"></i> YouTube</a>
             <a href="https://whatsapp.com/channel/0029Vb27q0JKwqSbZewkPh1r" target="_blank" class="social-link whatsapp"><i data-lucide="message-circle"></i> WhatsApp</a>
@@ -128,6 +130,29 @@
         </div>
     </section>
 
+    <!-- Leaderboard Section -->
+    <section id="leaderboard-section" class="videos-container" style="margin-top: 2rem;">
+        <div class="section-header">
+            <h2>Top Performers 🏆</h2>
+            <p>Global leaderboard for AI Mock Test scores.</p>
+        </div>
+        <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 10px; overflow-x: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        <th style="padding: 1rem;">Rank</th>
+                        <th style="padding: 1rem;">Student Name</th>
+                        <th style="padding: 1rem;">Subject</th>
+                        <th style="padding: 1rem;">Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="4" style="text-align:center; padding:1rem;">Loading leaderboard...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- Job Alerts Section -->
     <section id="job-alerts-section" class="videos-container" style="margin-top: 2rem;">
         <div class="section-header">
@@ -135,17 +160,8 @@
             <p>Latest opportunities for engineering students.</p>
         </div>
         <div class="video-grid" id="job-alerts-grid">
-            <div class="video-card" style="padding: 1.5rem;">
-                <h3 style="color: var(--primary); display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="briefcase"></i> Software Intern</h3>
-                <h4 style="margin: 0.5rem 0;">TechCorp Solutions</h4>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Bengaluru • Stipend: ₹15,000/mo</p>
-                <button class="cta-btn secondary" style="width: 100%;" onclick="alert('Job portal feature coming soon!')">Apply Now</button>
-            </div>
-            <div class="video-card" style="padding: 1.5rem;">
-                <h3 style="color: var(--primary); display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="briefcase"></i> Data Science Trainee</h3>
-                <h4 style="margin: 0.5rem 0;">InnovateAI Labs</h4>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Remote • Stipend: ₹20,000/mo</p>
-                <button class="cta-btn secondary" style="width: 100%;" onclick="alert('Job portal feature coming soon!')">Apply Now</button>
+            <div class="loader-container">
+                <i data-lucide="loader" class="spin"></i> Fetching latest jobs...
             </div>
         </div>
     </section>
@@ -311,7 +327,61 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=3"></script>
+    <!-- User Dashboard Modal -->
+    <div id="dashboard-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <button id="close-dashboard-modal" class="close-btn"><i data-lucide="x"></i></button>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">My Dashboard</h2>
+            
+            <div style="background: var(--background); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 id="dashboard-name">Student Name</h3>
+                <p id="dashboard-email" style="color: var(--text-secondary);">student@email.com</p>
+                <span id="dashboard-pro-badge" style="display:none; background:#ff4757; color:white; padding:0.2rem 0.5rem; border-radius:5px; font-size:0.8rem; margin-top:0.5rem; display:inline-block;"><i data-lucide="gem" style="width:12px; height:12px;"></i> PRO User</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align:center; border: 1px solid var(--border);">
+                    <i data-lucide="check-circle" style="color: #2ed573; width:32px; height:32px; margin-bottom:0.5rem;"></i>
+                    <h4 id="dashboard-watched-count">0 Videos</h4>
+                    <p style="font-size:0.8rem; color:var(--text-secondary);">Completed</p>
+                </div>
+                <div style="background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align:center; border: 1px solid var(--border);">
+                    <i data-lucide="award" style="color: #ffa502; width:32px; height:32px; margin-bottom:0.5rem;"></i>
+                    <h4 id="dashboard-cert-count">0 Certificates</h4>
+                    <p style="font-size:0.8rem; color:var(--text-secondary);">Earned</p>
+                </div>
+            </div>
+
+            <button id="logout-btn" class="cta-btn secondary" style="width: 100%; border-color:#ff4757; color:#ff4757;">Log Out</button>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Floating UI -->
+    <div id="ai-chatbot-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 350px;">
+        <button id="chatbot-toggle-btn" class="cta-btn" style="border-radius: 50%; width: 60px; height: 60px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); float: right;">
+            <i data-lucide="bot" style="width: 32px; height: 32px;"></i>
+        </button>
+        
+        <div id="chatbot-window" style="display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 15px; margin-bottom: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; flex-direction: column; height: 450px;">
+            <div style="background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="sparkles"></i> AI Study Buddy</h3>
+                <button id="close-chatbot" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; background: var(--background);">
+                <div style="background: var(--card-bg); padding: 0.8rem; border-radius: 10px; border-bottom-left-radius: 0; align-self: flex-start; max-width: 85%; font-size: 0.9rem; border: 1px solid var(--border);">
+                    Hi! I'm your AI Study Buddy. Ask me any doubts about your engineering subjects or the video you are watching!
+                </div>
+            </div>
+            
+            <div style="padding: 0.8rem; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; gap: 0.5rem;">
+                <input type="text" id="chat-input" placeholder="Ask a question..." style="flex: 1; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--background); color: var(--text);">
+                <button id="send-chat-btn" class="cta-btn" style="padding: 0.8rem;"><i data-lucide="send" style="width: 18px; height: 18px;"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=4"></script>
     <script>
         lucide.createIcons();
     </script>

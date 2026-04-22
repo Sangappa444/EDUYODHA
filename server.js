@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
-const { Video, Comment, User } = require('./database');
+const { Video, Comment, User, Note, TestScore, Job } = require('./database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_123';
@@ -138,6 +138,106 @@ app.get('/api/auth/me', async (req, res) => {
     }
 });
 
+// Middleware to verify token for protected routes
+const verifyToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch (e) {
+        res.status(401).json({ error: "Invalid token" });
+    }
+};
+
+// --- CLOUD NOTES API ---
+app.get('/api/notes/:video_id', verifyToken, async (req, res) => {
+    try {
+        const note = await Note.findOne({ user_id: req.user.id, video_id: req.params.video_id });
+        res.json({ note_text: note ? note.note_text : "" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/notes', verifyToken, async (req, res) => {
+    try {
+        const { video_id, note_text } = req.body;
+        let note = await Note.findOne({ user_id: req.user.id, video_id });
+        if (note) {
+            note.note_text = note_text;
+            note.updated_at = Date.now();
+            await note.save();
+        } else {
+            note = await Note.create({ user_id: req.user.id, video_id, note_text });
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- LEADERBOARD & MOCK TEST SCORES ---
+app.post('/api/mocktest/score', verifyToken, async (req, res) => {
+    try {
+        const { student_name, subject, score, total } = req.body;
+        const testScore = await TestScore.create({ user_id: req.user.id, student_name, subject, score, total });
+        res.json({ success: true, testScore });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const scores = await TestScore.find().sort({ score: -1 }).limit(10);
+        res.json(scores);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- DYNAMIC JOB PORTAL ---
+app.get('/api/jobs', async (req, res) => {
+    try {
+        const jobs = await Job.find().sort({ created_at: -1 });
+        res.json(jobs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/admin/jobs', async (req, res) => {
+    // Simple unprotected route for adding jobs easily via script
+    try {
+        const newJob = await Job.create(req.body);
+        res.json({ success: true, newJob });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- PAYMENT API (MOCK) ---
+app.post('/api/payment/order', verifyToken, async (req, res) => {
+    // Return mock order ID
+    res.json({ orderId: "order_MOCK" + Math.floor(Math.random()*100000) });
+});
+
+app.post('/api/payment/verify', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (user) {
+            user.is_pro = true;
+            await user.save();
+        }
+        // Issue new token with pro privileges
+        const token = jwt.sign({ id: user._id, is_pro: true }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ success: true, token });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // AI Mock Test Generator
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -171,6 +271,26 @@ app.post('/api/mocktest/generate', async (req, res) => {
     } catch (err) {
         console.error("Gemini API Error:", err);
         res.status(500).json({ error: "Failed to generate mock test questions. " + err.message });
+    }
+});
+
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { message, video_title } = req.body;
+        if (!message) return res.status(400).json({ error: "Message is required" });
+        
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const prompt = `You are a helpful AI tutor for engineering students on the EDU YODHA platform. 
+        The student is currently watching a video titled: "${video_title || 'General Subject'}".
+        Student's Question: ${message}
+        
+        Provide a clear, concise, and educational response.`;
+        
+        const result = await model.generateContent(prompt);
+        res.json({ response: result.response.text() });
+    } catch (err) {
+        console.error("Chatbot API Error:", err);
+        res.status(500).json({ error: "Failed to process chat message." });
     }
 });
 

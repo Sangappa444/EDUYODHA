@@ -287,29 +287,58 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Global Notebook logic
-    window.toggleNotebook = function(vid) {
+    window.toggleNotebook = async function(vid) {
         const panel = document.getElementById(`notebook-section-${vid}`);
         const textarea = document.getElementById(`notebook-input-${vid}`);
+        const statusSpan = document.getElementById(`notebook-status-${vid}`);
         
         if(panel.style.display === 'none') {
             panel.style.display = 'block';
+            const token = localStorage.getItem('eduYodhaToken');
             
-            // Load existing notes from localStorage
-            const savedNotes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
-            if(savedNotes[vid]) {
-                textarea.value = savedNotes[vid];
+            // Try fetching from cloud if logged in
+            if (token) {
+                try {
+                    statusSpan.innerText = 'Syncing from cloud...';
+                    const res = await fetch(`/api/notes/${vid}`, { headers: { 'Authorization': `Bearer ${token}` }});
+                    if (res.ok) {
+                        const data = await res.json();
+                        textarea.value = data.note_text || "";
+                        statusSpan.innerText = 'Synced with Cloud.';
+                    }
+                } catch(e) {
+                    statusSpan.innerText = 'Cloud sync failed. Using local storage.';
+                }
+            } else {
+                const savedNotes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
+                if(savedNotes[vid]) textarea.value = savedNotes[vid];
+                statusSpan.innerText = 'Saved locally in browser.';
             }
             
             // Attach auto-save listener
             textarea.oninput = function() {
-                const notes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
-                notes[vid] = textarea.value;
-                localStorage.setItem('eduYodhaNotes', JSON.stringify(notes));
-                document.getElementById(`notebook-status-${vid}`).innerText = 'Autosaving...';
-                
+                statusSpan.innerText = 'Autosaving...';
                 clearTimeout(window[`saveTimer${vid}`]);
-                window[`saveTimer${vid}`] = setTimeout(() => {
-                    document.getElementById(`notebook-status-${vid}`).innerText = 'Saved securely in browser.';
+                
+                window[`saveTimer${vid}`] = setTimeout(async () => {
+                    const text = textarea.value;
+                    if (token) {
+                        try {
+                            await fetch('/api/notes', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ video_id: vid, note_text: text })
+                            });
+                            statusSpan.innerText = 'Saved to Cloud securely.';
+                        } catch(e) {
+                            statusSpan.innerText = 'Failed to save to cloud.';
+                        }
+                    } else {
+                        const notes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
+                        notes[vid] = text;
+                        localStorage.setItem('eduYodhaNotes', JSON.stringify(notes));
+                        statusSpan.innerText = 'Saved locally in browser.';
+                    }
                 }, 1000);
             };
         } else {
@@ -317,9 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.downloadNotes = function(vid, title) {
-        const notes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
-        const text = notes[vid] || "";
+    window.downloadNotes = async function(vid, title) {
+        let text = "";
+        const token = localStorage.getItem('eduYodhaToken');
+        if (token) {
+            try {
+                const res = await fetch(`/api/notes/${vid}`, { headers: { 'Authorization': `Bearer ${token}` }});
+                if (res.ok) {
+                    const data = await res.json();
+                    text = data.note_text || "";
+                }
+            } catch(e) {}
+        } else {
+            const notes = JSON.parse(localStorage.getItem('eduYodhaNotes')) || {};
+            text = notes[vid] || "";
+        }
+        
         if(!text.trim()) return alert('Your notebook is empty. Type some notes first!');
         
         const blob = new Blob([text], { type: 'text/plain' });
@@ -703,8 +745,21 @@ document.addEventListener('DOMContentLoaded', () => {
             confetti({ particleCount: 200, spread: 120, origin: { y: 0.3 } });
         }
         
-        // Auto-generate certificate
-        const finalName = localStorage.getItem('eduYodhaStudentName') || 'Student';
+        // Submit score to Leaderboard if logged in
+        const token = localStorage.getItem('eduYodhaToken');
+        if (token) {
+            fetch('/api/mocktest/score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    student_name: finalName,
+                    subject: currentTestSubject,
+                    score: currentScore,
+                    total: currentQuestions.length
+                })
+            }).catch(console.error);
+        }
+
         setTimeout(() => {
             if(certModal) {
                 certModal.style.display = 'flex';
@@ -836,6 +891,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await res.json();
                     authNavBtn.innerHTML = `<i data-lucide="user-check"></i> ${data.user.name} (Logout)`;
                     localStorage.setItem('eduYodhaStudentName', data.user.name);
+                    
+                    const dashBtn = document.getElementById('dashboard-nav-btn');
+                    if (dashBtn) dashBtn.style.display = 'inline-flex';
+                    
                     if (data.user.is_pro) {
                         localStorage.setItem('eduYodhaPro', 'true');
                         if (goproBtn) {
@@ -847,6 +906,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Token expired or invalid
                     localStorage.removeItem('eduYodhaToken');
                     localStorage.removeItem('eduYodhaPro');
+                    const dashBtn = document.getElementById('dashboard-nav-btn');
+                    if (dashBtn) dashBtn.style.display = 'none';
                 }
             } catch (err) {
                 console.error("Auth check failed");
@@ -860,4 +921,195 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadCategories();
     loadVideos();
+    fetchJobs();
+    fetchLeaderboard();
+
+    // --- DYNAMIC JOBS ---
+    async function fetchJobs() {
+        const grid = document.getElementById('job-alerts-grid');
+        if (!grid) return;
+        try {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            grid.innerHTML = '';
+            if (jobs.length === 0) {
+                grid.innerHTML = '<p style="padding:1rem;">No active job alerts at the moment.</p>';
+            } else {
+                jobs.forEach(job => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.style.padding = '1.5rem';
+                    card.innerHTML = `
+                        <h3 style="color: var(--primary); display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="briefcase"></i> ${job.title}</h3>
+                        <h4 style="margin: 0.5rem 0;">${job.company}</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">${job.location} • Stipend: ${job.stipend}</p>
+                        <button class="cta-btn secondary" style="width: 100%;" onclick="window.open('${job.apply_link}', '_blank')">Apply Now</button>
+                    `;
+                    grid.appendChild(card);
+                });
+                if(window.lucide) window.lucide.createIcons();
+            }
+        } catch (e) {
+            grid.innerHTML = '<p style="padding:1rem; color:red;">Failed to load jobs.</p>';
+        }
+    }
+
+    // --- LEADERBOARD ---
+    async function fetchLeaderboard() {
+        const body = document.getElementById('leaderboard-body');
+        if (!body) return;
+        try {
+            const res = await fetch('/api/leaderboard');
+            const scores = await res.json();
+            body.innerHTML = '';
+            if (scores.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:1rem;">No scores yet. Be the first to take a mock test!</td></tr>';
+            } else {
+                scores.forEach((s, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border)';
+                    tr.innerHTML = `
+                        <td style="padding: 1rem; font-weight:bold; color:var(--primary);">#${idx + 1}</td>
+                        <td style="padding: 1rem;">${s.student_name}</td>
+                        <td style="padding: 1rem;">${s.subject}</td>
+                        <td style="padding: 1rem; font-weight:bold;">${s.score}/${s.total}</td>
+                    `;
+                    body.appendChild(tr);
+                });
+            }
+        } catch (e) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:1rem; color:red;">Failed to load leaderboard.</td></tr>';
+        }
+    }
+
+    // --- USER DASHBOARD ---
+    const dashNavBtn = document.getElementById('dashboard-nav-btn');
+    const dashModal = document.getElementById('dashboard-modal');
+    const closeDashModal = document.getElementById('close-dashboard-modal');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    if (dashNavBtn) {
+        dashNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            dashModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Populate stats
+            document.getElementById('dashboard-name').innerText = localStorage.getItem('eduYodhaStudentName') || 'Student';
+            if(localStorage.getItem('eduYodhaPro')) {
+                document.getElementById('dashboard-pro-badge').style.display = 'inline-block';
+            }
+            
+            const watched = JSON.parse(localStorage.getItem('eduYodhaWatched')) || {};
+            document.getElementById('dashboard-watched-count').innerText = Object.keys(watched).length + ' Videos';
+            
+            // Count certificates
+            let certCount = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                if (localStorage.key(i).startsWith('eduYodhaCert_')) certCount++;
+            }
+            document.getElementById('dashboard-cert-count').innerText = certCount + ' Certificates';
+        });
+    }
+
+    if (closeDashModal) {
+        closeDashModal.addEventListener('click', () => {
+            dashModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('eduYodhaToken');
+            localStorage.removeItem('eduYodhaPro');
+            localStorage.removeItem('eduYodhaStudentName');
+            alert("Logged out successfully");
+            location.reload();
+        });
+    }
+
+    // --- AI CHATBOT ---
+    const chatToggle = document.getElementById('chatbot-toggle-btn');
+    const chatWindow = document.getElementById('chatbot-window');
+    const closeChat = document.getElementById('close-chatbot');
+    const chatInput = document.getElementById('chat-input');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    const chatMessages = document.getElementById('chat-messages');
+
+    if (chatToggle) {
+        chatToggle.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
+        });
+        closeChat.addEventListener('click', () => {
+            chatWindow.style.display = 'none';
+        });
+        
+        async function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            
+            chatMessages.innerHTML += `<div style="background: var(--primary); color:white; padding: 0.8rem; border-radius: 10px; border-bottom-right-radius: 0; align-self: flex-end; max-width: 85%; font-size: 0.9rem;">${text}</div>`;
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.innerHTML = 'AI is typing...';
+            typingIndicator.style.cssText = 'color:#888; font-size:0.8rem; padding:0.5rem;';
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, video_title: window.currentCategory })
+                });
+                const data = await res.json();
+                chatMessages.removeChild(typingIndicator);
+                
+                chatMessages.innerHTML += `<div style="background: var(--card-bg); padding: 0.8rem; border-radius: 10px; border-bottom-left-radius: 0; align-self: flex-start; max-width: 85%; font-size: 0.9rem; border: 1px solid var(--border);">${data.response}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch(e) {
+                chatMessages.removeChild(typingIndicator);
+                chatMessages.innerHTML += `<div style="color:red; font-size:0.8rem; align-self: flex-start;">Error connecting to AI.</div>`;
+            }
+        }
+        
+        sendChatBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChatMessage(); });
+    }
+
+    // --- PAYMENT VERIFICATION ---
+    if (submitPaymentBtn) {
+        // Re-write submit button to hit backend API
+        submitPaymentBtn.addEventListener('click', async () => {
+            const token = localStorage.getItem('eduYodhaToken');
+            if (!token) return alert('Please login to purchase PRO.');
+            if (!mockCc.value) return alert('Enter mock card number');
+            
+            submitPaymentBtn.innerText = 'Processing via Razorpay/Stripe...';
+            submitPaymentBtn.disabled = true;
+            
+            try {
+                // Mock Order
+                await fetch('/api/payment/order', { headers: { 'Authorization': `Bearer ${token}` }, method: 'POST'});
+                // Mock Verify
+                const res = await fetch('/api/payment/verify', { headers: { 'Authorization': `Bearer ${token}` }, method: 'POST'});
+                const data = await res.json();
+                
+                if (data.success) {
+                    localStorage.setItem('eduYodhaToken', data.token);
+                    localStorage.setItem('eduYodhaPro', 'true');
+                    alert('Payment Successful! PRO features unlocked.');
+                    location.reload();
+                }
+            } catch (e) {
+                alert('Payment failed');
+                submitPaymentBtn.innerText = 'Pay Securely';
+                submitPaymentBtn.disabled = false;
+            }
+        });
+    }
+
 });
