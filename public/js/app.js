@@ -398,7 +398,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (percent === 100) {
             claimCertBtn.style.display = 'flex';
-            if(window.confetti && !window.celebrated) {
+            
+            const isGenerated = localStorage.getItem(`eduYodhaCert_${window.currentCategory}`);
+            if (isGenerated) {
+                claimCertBtn.innerHTML = '<i data-lucide="award"></i> View Certificate';
+            } else {
+                claimCertBtn.innerHTML = '<i data-lucide="award"></i> Claim Certificate';
+            }
+            if(window.lucide) window.lucide.createIcons();
+
+            if(window.confetti && !window.celebrated && !isGenerated) {
                 confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
                 window.celebrated = true;
             }
@@ -412,11 +421,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if(claimCertBtn) {
         claimCertBtn.addEventListener('click', () => {
             certModal.style.display = 'flex';
-            namePromptSection.style.display = 'block';
-            certDisplaySection.style.display = 'none';
             document.body.style.overflow = 'hidden';
+            
             const savedName = localStorage.getItem('eduYodhaStudentName');
-            if (savedName) studentNameInput.value = savedName;
+            const isGenerated = localStorage.getItem(`eduYodhaCert_${window.currentCategory}`);
+            
+            if (isGenerated && savedName) {
+                namePromptSection.style.display = 'none';
+                certStudentName.innerText = savedName;
+                certPlaylistName.innerText = window.currentCategory.replace(/_/g, ' ');
+                certDisplaySection.style.display = 'block';
+            } else {
+                namePromptSection.style.display = 'block';
+                certDisplaySection.style.display = 'none';
+                if (savedName) studentNameInput.value = savedName;
+            }
         });
     }
 
@@ -427,6 +446,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = studentNameInput.value.trim();
             if (!name) return alert('Please enter your name to generate the certificate.');
             localStorage.setItem('eduYodhaStudentName', name);
+            localStorage.setItem(`eduYodhaCert_${window.currentCategory}`, 'true');
+            if (claimCertBtn) {
+                claimCertBtn.innerHTML = '<i data-lucide="award"></i> View Certificate';
+                if(window.lucide) window.lucide.createIcons();
+            }
             namePromptSection.style.display = 'none';
             certStudentName.innerText = name;
             certPlaylistName.innerText = window.currentCategory.replace(/_/g, ' ');
@@ -549,11 +573,12 @@ document.addEventListener('DOMContentLoaded', () => {
             currentQuestions = data;
             currentQuestionIndex = 0;
             currentScore = 0;
+            testFinished = false;
             
             testLoadingPhase.style.display = 'none';
             testActivePhase.style.display = 'block';
             
-            startTimer(60 * 60); // 60 minutes
+            startTimer(currentQuestions.length * 60); // 1 minute per question
             renderQuestion();
 
         } catch (error) {
@@ -632,7 +657,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    let testFinished = false;
+
     function finishTest() {
+        if (testFinished) return;
+        testFinished = true;
+        
         clearInterval(timerInterval);
         testActivePhase.style.display = 'none';
         testResultsPhase.style.display = 'block';

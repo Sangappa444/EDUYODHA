@@ -147,8 +147,8 @@ app.post('/api/mocktest/generate', async (req, res) => {
     if (!subject || !chapter) return res.status(400).json({ error: "Missing subject or chapter" });
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `Generate exactly 60 multiple choice questions for KCET exam preparation.
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const prompt = `Generate exactly 15 multiple choice questions for KCET exam preparation.
         Subject: ${subject}
         Chapter: ${chapter}
         
