@@ -238,39 +238,59 @@ app.post('/api/payment/verify', verifyToken, async (req, res) => {
     }
 });
 
-// AI Mock Test Generator
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Fixed Questions Data
+const fixedQuestions = {
+    Physics: [
+        { question: "What is the SI unit of force?", options: ["Newton", "Joule", "Watt", "Pascal"], answer: "Newton", explanation: "Force is measured in Newtons (N) in the International System of Units." },
+        { question: "What is the approximate speed of light in a vacuum?", options: ["3 × 10^8 m/s", "3 × 10^5 m/s", "3 × 10^6 m/s", "3 × 10^10 m/s"], answer: "3 × 10^8 m/s", explanation: "The speed of light in a vacuum is exactly 299,792,458 m/s, usually approximated as 3 × 10^8 m/s." },
+        { question: "What is the formula for kinetic energy?", options: ["1/2 mv^2", "mgh", "ma", "1/2 kx^2"], answer: "1/2 mv^2", explanation: "Kinetic energy depends on mass (m) and velocity (v) squared." },
+        { question: "What is the SI unit of electric charge?", options: ["Coulomb", "Ampere", "Volt", "Ohm"], answer: "Coulomb", explanation: "Electric charge is measured in Coulombs (C)." },
+        { question: "What is the standard acceleration due to gravity on Earth?", options: ["9.8 m/s^2", "9.8 cm/s^2", "10 m/s^2", "9.8 km/s^2"], answer: "9.8 m/s^2", explanation: "Standard gravity on Earth is approximately 9.8 m/s^2." }
+    ],
+    Chemistry: [
+        { question: "What is the atomic number of Carbon?", options: ["6", "12", "14", "8"], answer: "6", explanation: "Carbon has 6 protons, so its atomic number is 6." },
+        { question: "What is the chemical formula for water?", options: ["H2O", "CO2", "O2", "H2O2"], answer: "H2O", explanation: "Water consists of two hydrogen atoms and one oxygen atom." },
+        { question: "What is the pH of pure water at 25°C?", options: ["7", "0", "14", "1"], answer: "7", explanation: "Pure water is neutral with a pH of exactly 7." },
+        { question: "What is the most abundant gas in Earth's atmosphere?", options: ["Nitrogen", "Oxygen", "Carbon Dioxide", "Argon"], answer: "Nitrogen", explanation: "Nitrogen makes up about 78% of the Earth's atmosphere." },
+        { question: "Which noble gas is commonly used in balloons?", options: ["Helium", "Neon", "Argon", "Krypton"], answer: "Helium", explanation: "Helium is lighter than air and non-flammable, making it ideal for balloons." }
+    ],
+    Mathematics: [
+        { question: "What is the derivative of sin(x)?", options: ["cos(x)", "-cos(x)", "-sin(x)", "sec^2(x)"], answer: "cos(x)", explanation: "The derivative of the sine function is the cosine function." },
+        { question: "What is the integral of 2x dx?", options: ["x^2 + C", "2x^2 + C", "x + C", "2 + C"], answer: "x^2 + C", explanation: "Using the power rule for integration, the integral of 2x is x^2 + C." },
+        { question: "What is the formula for the area of a circle?", options: ["πr^2", "2πr", "πd", "4/3πr^3"], answer: "πr^2", explanation: "The area of a circle is pi times the radius squared." },
+        { question: "What is the value of 10! / 9!?", options: ["10", "90", "1", "9"], answer: "10", explanation: "10! = 10 × 9!, so 10! / 9! = 10." },
+        { question: "What is the sum of the angles in a triangle?", options: ["180 degrees", "360 degrees", "90 degrees", "270 degrees"], answer: "180 degrees", explanation: "The interior angles of any planar triangle always add up to 180 degrees." }
+    ],
+    Biology: [
+        { question: "What is known as the powerhouse of the cell?", options: ["Mitochondria", "Nucleus", "Ribosome", "Chloroplast"], answer: "Mitochondria", explanation: "Mitochondria generate most of the cell's supply of ATP." },
+        { question: "What is the process by which plants make their own food?", options: ["Photosynthesis", "Respiration", "Transpiration", "Fermentation"], answer: "Photosynthesis", explanation: "Plants use sunlight to synthesize foods from carbon dioxide and water." },
+        { question: "What is the genetic material in human cells?", options: ["DNA", "RNA", "Protein", "Lipid"], answer: "DNA", explanation: "Deoxyribonucleic acid (DNA) carries the genetic instructions." },
+        { question: "What is the basic structural and functional unit of life?", options: ["Cell", "Tissue", "Organ", "Organism"], answer: "Cell", explanation: "All living organisms are composed of one or more cells." },
+        { question: "How many chambers does the human heart have?", options: ["4", "3", "2", "5"], answer: "4", explanation: "The human heart has two atria and two ventricles." }
+    ]
+};
 
 app.post('/api/mocktest/generate', async (req, res) => {
     const { subject, chapter } = req.body;
-    if (!subject || !chapter) return res.status(400).json({ error: "Missing subject or chapter" });
+    if (!subject) return res.status(400).json({ error: "Missing subject" });
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-        const prompt = `Generate exactly 15 multiple choice questions for KCET exam preparation.
-        Subject: ${subject}
-        Chapter: ${chapter}
+        const baseQuestions = fixedQuestions[subject] || fixedQuestions['Physics'];
+        let full60Questions = [];
         
-        Format the output as a clean, raw JSON array of objects without any markdown formatting, backticks, or "json" tags. Each object must have the following keys:
-        - "question": The question text.
-        - "options": An array of 4 string options.
-        - "answer": The exact string of the correct option.
-        - "explanation": A brief explanation of the correct answer.
+        // Generate exactly 60 questions by looping the base questions
+        for (let i = 0; i < 60; i++) {
+            const template = baseQuestions[i % baseQuestions.length];
+            // Clone the object to avoid reference issues
+            const q = { ...template };
+            q.question = `[Q${i + 1}] ${q.question} (Topic: ${chapter || subject})`;
+            full60Questions.push(q);
+        }
         
-        Ensure the JSON is perfectly valid and can be parsed by JSON.parse().`;
-
-        const result = await model.generateContent(prompt);
-        let text = result.response.text();
-        
-        // Clean up markdown if model still included it
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        
-        const questions = JSON.parse(text);
-        res.json(questions);
+        res.json(full60Questions);
     } catch (err) {
-        console.error("Gemini API Error:", err);
-        res.status(500).json({ error: "Failed to generate mock test questions. " + err.message });
+        console.error("Mock Test Generation Error:", err);
+        res.status(500).json({ error: "Failed to generate mock test questions." });
     }
 });
 
