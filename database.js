@@ -17,7 +17,8 @@ const videoSchema = new mongoose.Schema({
     title: { type: String, required: true },
     youtube_id: { type: String, required: true },
     category: { type: String, required: true },
-    description: { type: String }
+    description: { type: String },
+    is_premium: { type: Boolean, default: false }
 });
 
 const commentSchema = new mongoose.Schema({
@@ -31,6 +32,15 @@ const commentSchema = new mongoose.Schema({
 const Video = mongoose.model('Video', videoSchema);
 const Comment = mongoose.model('Comment', commentSchema);
 
+const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    is_pro: { type: Boolean, default: false },
+    created_at: { type: Date, default: Date.now }
+});
+const User = mongoose.model('User', userSchema);
+
 async function seedData() {
     try {
         const count = await Video.countDocuments();
@@ -38,17 +48,17 @@ async function seedData() {
             console.log("Seeding initial video data...");
             
             const videos = [
-                { title: "Machine learning|what is machine learning", youtube_id: "iVZFg84Ygks", category: "Machine Learning", description: "Introduction, definition and example in Kannada" },
-                { title: "Why do we need ML|importance|popularity", youtube_id: "e4J9Lhnnbho", category: "Machine Learning", description: "Why Machine Learning became popular and its importance" },
-                { title: "Knowledge pyramid|Machine Learning|DIKW model", youtube_id: "pAn_qQ2-ATE", category: "Machine Learning", description: "Data to Information to Knowledge to Wisdom in Kannada" },
-                { title: "Artificial intelligence, neural network, deep learning", youtube_id: "yvwj1w0vk1k", category: "Machine Learning", description: "Relation of ML to other technologies" },
-                { title: "How ML related to Data science, analytics, pattern recognition", youtube_id: "PeXv34yMDvo", category: "Machine Learning", description: "Important relationships in Data Science" },
-                { title: "Types of Machine learning|fundamentals|basics", youtube_id: "nnLyVa_HeUY", category: "Machine Learning", description: "Core concepts and basics in EDU YODHA" },
-                { title: "Supervised Learning|Types of Machine Learning", youtube_id: "_YPF5uwWttI", category: "Machine Learning", description: "Basic concepts of Supervised Learning" },
-                { title: "Unsupervised learning|Types of Machine Learning", youtube_id: "tOgTJL4D1Ig", category: "Machine Learning", description: "Concepts and fundamentals of Unsupervised ML" },
-                { title: "Semi-supervised and reinforcement learning", youtube_id: "ymDQ8hxbLT4", category: "Machine Learning", description: "Understanding Reinforcement and Semi-supervised ML" },
-                { title: "Challenges of Machine Learning", youtube_id: "oYDKewCVmLY", category: "Machine Learning", description: "Overfitting, Underfitting, Bias & Variance" },
-                { title: "CRISP-DM Process Explained", youtube_id: "eyWPaManDA4", category: "Machine Learning", description: "Simple Friendship Example | ML process" }
+                { title: "Machine learning|what is machine learning", youtube_id: "iVZFg84Ygks", category: "Machine Learning", description: "Introduction, definition and example in Kannada", is_premium: false },
+                { title: "Why do we need ML|importance|popularity", youtube_id: "e4J9Lhnnbho", category: "Machine Learning", description: "Why Machine Learning became popular and its importance", is_premium: false },
+                { title: "Knowledge pyramid|Machine Learning|DIKW model", youtube_id: "pAn_qQ2-ATE", category: "Machine Learning", description: "Data to Information to Knowledge to Wisdom in Kannada", is_premium: false },
+                { title: "Artificial intelligence, neural network, deep learning", youtube_id: "yvwj1w0vk1k", category: "Machine Learning", description: "Relation of ML to other technologies", is_premium: false },
+                { title: "How ML related to Data science, analytics, pattern recognition", youtube_id: "PeXv34yMDvo", category: "Machine Learning", description: "Important relationships in Data Science", is_premium: false },
+                { title: "Types of Machine learning|fundamentals|basics", youtube_id: "nnLyVa_HeUY", category: "Machine Learning", description: "Core concepts and basics in EDU YODHA", is_premium: false },
+                { title: "Supervised Learning|Types of Machine Learning", youtube_id: "_YPF5uwWttI", category: "Machine Learning", description: "Basic concepts of Supervised Learning", is_premium: false },
+                { title: "Unsupervised learning|Types of Machine Learning", youtube_id: "tOgTJL4D1Ig", category: "Machine Learning", description: "Concepts and fundamentals of Unsupervised ML", is_premium: true },
+                { title: "Semi-supervised and reinforcement learning", youtube_id: "ymDQ8hxbLT4", category: "Machine Learning", description: "Understanding Reinforcement and Semi-supervised ML", is_premium: true },
+                { title: "Challenges of Machine Learning", youtube_id: "oYDKewCVmLY", category: "Machine Learning", description: "Overfitting, Underfitting, Bias & Variance", is_premium: true },
+                { title: "CRISP-DM Process Explained", youtube_id: "eyWPaManDA4", category: "Machine Learning", description: "Simple Friendship Example | ML process", is_premium: true }
             ];
 
             let newPlaylists = [];
@@ -77,4 +87,4 @@ async function seedData() {
     }
 }
 
-module.exports = { Video, Comment };
+module.exports = { Video, Comment, User };

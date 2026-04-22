@@ -19,7 +19,11 @@
         </div>
         <div class="nav-links">
             <a href="#" class="active">Home</a>
-            <a href="#videos-section">Videos</a>
+            <a href="#videos-section">Courses</a>
+            <a href="#mock-tests-section">Mock Tests</a>
+            <a href="#job-alerts-section">Jobs</a>
+            <a href="#promotions-section">Colleges</a>
+            <a href="#" id="auth-nav-btn" class="gopro-btn" style="background: var(--text); color: var(--background);"><i data-lucide="user"></i> Sign In</a>
             <a href="#" id="gopro-nav-btn" class="gopro-btn"><i data-lucide="gem"></i> GoPro / Premium</a>
             <a href="https://youtube.com/@eduyodha?si=iEdRQPXnEz8SGmNF" target="_blank" class="social-link" style="color: #ff0000;"><i data-lucide="youtube"></i> YouTube</a>
             <a href="https://whatsapp.com/channel/0029Vb27q0JKwqSbZewkPh1r" target="_blank" class="social-link whatsapp"><i data-lucide="message-circle"></i> WhatsApp</a>
@@ -90,6 +94,88 @@
         </div>
     </main>
 
+    <!-- Mock Tests Section -->
+    <section id="mock-tests-section" class="videos-container" style="background-color: var(--card-bg); margin-top: 2rem; padding: 2rem; border-radius: 20px;">
+        <div class="section-header">
+            <h2>KCET AI Mock Tests</h2>
+            <p>Generate completely free, dynamic chapter-wise mock tests using AI.</p>
+        </div>
+        <div class="video-grid" id="mock-test-grid">
+            <div class="video-card subject-card" data-subject="Physics" style="padding: 1.5rem; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.3s;">
+                <i data-lucide="atom" style="width: 40px; height: 40px; color: #ff4757; margin-bottom: 1rem;"></i>
+                <h3>Physics</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">KCET Pattern</p>
+                <button class="cta-btn mock-subject-btn" style="width: 100%;" data-subject="Physics">Start Test</button>
+            </div>
+            <div class="video-card subject-card" data-subject="Chemistry" style="padding: 1.5rem; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.3s;">
+                <i data-lucide="flask-conical" style="width: 40px; height: 40px; color: #2ed573; margin-bottom: 1rem;"></i>
+                <h3>Chemistry</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">KCET Pattern</p>
+                <button class="cta-btn mock-subject-btn" style="width: 100%;" data-subject="Chemistry">Start Test</button>
+            </div>
+            <div class="video-card subject-card" data-subject="Mathematics" style="padding: 1.5rem; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.3s;">
+                <i data-lucide="calculator" style="width: 40px; height: 40px; color: #1e90ff; margin-bottom: 1rem;"></i>
+                <h3>Mathematics</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">KCET Pattern</p>
+                <button class="cta-btn mock-subject-btn" style="width: 100%;" data-subject="Mathematics">Start Test</button>
+            </div>
+            <div class="video-card subject-card" data-subject="Biology" style="padding: 1.5rem; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.3s;">
+                <i data-lucide="leaf" style="width: 40px; height: 40px; color: #ffa502; margin-bottom: 1rem;"></i>
+                <h3>Biology</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">KCET Pattern</p>
+                <button class="cta-btn mock-subject-btn" style="width: 100%;" data-subject="Biology">Start Test</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Job Alerts Section -->
+    <section id="job-alerts-section" class="videos-container" style="margin-top: 2rem;">
+        <div class="section-header">
+            <h2>Job & Internship Alerts</h2>
+            <p>Latest opportunities for engineering students.</p>
+        </div>
+        <div class="video-grid" id="job-alerts-grid">
+            <div class="video-card" style="padding: 1.5rem;">
+                <h3 style="color: var(--primary); display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="briefcase"></i> Software Intern</h3>
+                <h4 style="margin: 0.5rem 0;">TechCorp Solutions</h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Bengaluru • Stipend: ₹15,000/mo</p>
+                <button class="cta-btn secondary" style="width: 100%;" onclick="alert('Job portal feature coming soon!')">Apply Now</button>
+            </div>
+            <div class="video-card" style="padding: 1.5rem;">
+                <h3 style="color: var(--primary); display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="briefcase"></i> Data Science Trainee</h3>
+                <h4 style="margin: 0.5rem 0;">InnovateAI Labs</h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Remote • Stipend: ₹20,000/mo</p>
+                <button class="cta-btn secondary" style="width: 100%;" onclick="alert('Job portal feature coming soon!')">Apply Now</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- College Promotions Section -->
+    <section id="promotions-section" class="videos-container" style="background-color: var(--card-bg); margin-top: 2rem; padding: 2rem; border-radius: 20px; border: 1px solid var(--border);">
+        <div class="section-header">
+            <h2>Featured Colleges & Coaching <span style="font-size: 0.8rem; background: var(--primary); color: white; padding: 0.2rem 0.5rem; border-radius: 10px; vertical-align: middle; margin-left: 0.5rem;">Sponsored</span></h2>
+            <p>Discover top institutions and placement training centers.</p>
+        </div>
+        <div class="video-grid">
+            <div class="video-card" style="padding: 1.5rem; text-align: center; border: 2px solid var(--primary);">
+                <div style="background: var(--background); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: inline-block;">
+                    <i data-lucide="graduation-cap" style="width: 48px; height: 48px; color: var(--primary);"></i>
+                </div>
+                <h3>Excel Engineering College</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Admissions open for 2026 Batch. Top placements guaranteed.</p>
+                <button class="cta-btn" style="width: 100%;" onclick="alert('Redirecting to partner site...')">Learn More</button>
+            </div>
+            <div class="video-card" style="padding: 1.5rem; text-align: center; border: 2px solid var(--primary);">
+                 <div style="background: var(--background); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: inline-block;">
+                    <i data-lucide="trending-up" style="width: 48px; height: 48px; color: var(--primary);"></i>
+                </div>
+                <h3>CodeMasters Coaching</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Join the intensive 6-month placement training bootcamp.</p>
+                <button class="cta-btn" style="width: 100%;" onclick="alert('Redirecting to partner site...')">Learn More</button>
+            </div>
+        </div>
+    </section>
+
     <footer>
         <div class="footer-content">
             <div class="brand">
@@ -155,6 +241,73 @@
                 <button id="submit-payment-btn" class="cta-btn" style="width: 100%;">Pay Securely</button>
             </div>
             <p style="color: #666; font-size:0.8rem; margin-top: 1rem;">This is a mock Razorpay/Stripe simulation wrapper.</p>
+        </div>
+    </div>
+
+    <!-- AI Mock Test Modal -->
+    <div id="ai-test-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <button id="close-ai-test-modal" class="close-btn" style="color:#000;"><i data-lucide="x"></i></button>
+            
+            <div id="test-setup-phase">
+                <h2 id="test-subject-title" style="color: var(--primary);">KCET Physics Test</h2>
+                <p>Enter a specific chapter to generate AI questions, or leave blank for a mixed test.</p>
+                <input type="text" id="chapter-input" placeholder="e.g. Thermodynamics, Vectors..." class="cert-input" style="color:#000; background:#f5f5f5; margin-bottom:1rem;">
+                <p>Enter your full name for the certificate.</p>
+                <input type="text" id="mock-name-input" placeholder="e.g. John Doe" class="cert-input" style="color:#000; background:#f5f5f5; margin-bottom:1rem;">
+                <button id="generate-test-btn" class="cta-btn" style="width:100%; display:flex; justify-content:center; gap:0.5rem;"><i data-lucide="cpu"></i> Generate Mock Test (60 Qs)</button>
+            </div>
+
+            <div id="test-loading-phase" style="display:none; text-align:center; padding: 2rem;">
+                <i data-lucide="loader" class="spin" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem;"></i>
+                <h3>AI is generating your 60 KCET questions...</h3>
+                <p style="color: var(--text-secondary);">This takes about 15-20 seconds. Please wait.</p>
+            </div>
+
+            <div id="test-active-phase" style="display:none;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem;">
+                    <span id="question-tracker" style="font-weight:bold;">Question 1/5</span>
+                    <span style="color:#ff4757; font-weight:bold;"><i data-lucide="clock" style="width:16px; height:16px; display:inline-block; vertical-align:middle;"></i> <span id="test-timer">05:00</span></span>
+                </div>
+                <h3 id="question-text" style="margin-bottom: 1.5rem; line-height: 1.4;"></h3>
+                <div id="options-container" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom: 1.5rem;">
+                    <!-- Options injected here -->
+                </div>
+                <button id="next-question-btn" class="cta-btn secondary" style="width:100%;" disabled>Next Question</button>
+            </div>
+
+            <div id="test-results-phase" style="display:none; text-align:center;">
+                <h2>Test Complete! 🎉</h2>
+                <h1 id="test-score-display" style="font-size: 3rem; color: var(--primary); margin: 1rem 0;"></h1>
+                <div id="test-explanations" style="text-align:left; max-height: 300px; overflow-y: auto; margin-top: 1.5rem; padding-right: 0.5rem;">
+                    <!-- Explanations injected here -->
+                </div>
+                <button onclick="document.getElementById('ai-test-modal').style.display='none'; document.body.style.overflow='auto';" class="cta-btn" style="width:100%; margin-top: 1.5rem;">Close Test</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <button id="close-auth-modal" class="close-btn" style="color:#000;"><i data-lucide="x"></i></button>
+            <h2 id="auth-title" style="color: var(--primary); margin-bottom: 1rem;">Sign In</h2>
+            
+            <div id="auth-error-message" style="color: #ff4757; font-size: 0.9rem; margin-bottom: 1rem; display: none;"></div>
+
+            <div id="register-fields" style="display: none;">
+                <input type="text" id="auth-name" placeholder="Full Name" class="cert-input" style="color:#000; background:#f5f5f5; margin-bottom:1rem;">
+            </div>
+            
+            <input type="email" id="auth-email" placeholder="Email Address" class="cert-input" style="color:#000; background:#f5f5f5; margin-bottom:1rem;">
+            <input type="password" id="auth-password" placeholder="Password" class="cert-input" style="color:#000; background:#f5f5f5; margin-bottom:1.5rem;">
+            
+            <button id="auth-submit-btn" class="cta-btn" style="width: 100%;">Login</button>
+            
+            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                <span id="auth-toggle-text">Don't have an account?</span> 
+                <a href="#" id="auth-toggle-link" style="color: var(--primary); font-weight: bold; text-decoration: none;">Sign Up</a>
+            </p>
         </div>
     </div>
 

@@ -30,12 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let allCategories = ['All'];
     window.currentCategory = 'All';
 
-    // Dummy Premium Content
-    const premiumVideos = [
-        { id: 9991, title: "Advanced Placements PREP 2026", youtube_id: "ukzFI9rgwfU", category: "PREMIUM PRO", description: "Exclusive for PRO members." },
-        { id: 9992, title: "1-on-1 Mentorship Session 1", youtube_id: "dQw4w9WgXcQ", category: "PREMIUM PRO", description: "Exclusive for PRO members." }
-    ];
-
     async function loadCategories() {
         try {
             const res = await fetch('/api/categories');
@@ -48,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if(localStorage.getItem('eduYodhaPro')) {
-                if(!allCategories.includes('PREMIUM PRO')) allCategories.push('PREMIUM PRO');
                 goproBtn.innerHTML = '<i data-lucide="check-circle"></i> PRO ACTIVE';
                 goproBtn.style.pointerEvents = 'none';
             }
@@ -66,13 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = `category-btn ${cat === 'All' ? 'active' : ''}`;
             btn.dataset.category = cat;
             
-            if(cat === 'PREMIUM PRO') {
-                btn.innerHTML = '💎 ' + cat;
-                btn.style.background = 'linear-gradient(90deg, #b92b27, #1565C0)';
-                btn.style.color = '#fff';
-            } else {
-                btn.textContent = cat === 'All' ? 'All Videos' : cat.replace(/_/g, ' ');
-            }
+            btn.textContent = cat === 'All' ? 'All Videos' : cat.replace(/_/g, ' ');
 
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
@@ -92,15 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loader.style.display = 'flex';
 
         try {
-            if(category === 'PREMIUM PRO') {
-                window.currentVideos = premiumVideos;
-            } else {
-                let url = '/api/videos';
-                if (category !== 'All') url += `?category=${encodeURIComponent(category)}`;
-                const res = await fetch(url);
-                const data = await res.json();
-                window.currentVideos = Array.isArray(data) ? data : [];
-            }
+            let url = '/api/videos';
+            if (category !== 'All') url += `?category=${encodeURIComponent(category)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            window.currentVideos = Array.isArray(data) ? data : [];
             
             loader.style.display = 'none';
             applyFilters();
@@ -183,13 +166,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const isLiked = likedVideos[video.id] ? 'liked' : '';
             const isWatched = watchedVideos[video.id] ? 'watched' : '';
 
+            const isProUser = !!localStorage.getItem('eduYodhaPro');
+            const showLock = video.is_premium && !isProUser;
+
+            let videoWrapperContent = '';
+            if (showLock) {
+                videoWrapperContent = `
+                    <div class="locked-video" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:var(--background); color:var(--text); border-radius:10px; text-align:center;">
+                        <i data-lucide="lock" style="width: 40px; height: 40px; margin-bottom: 10px; color:#ff4757;"></i>
+                        <h4 style="margin-bottom:10px; color:#ff4757;">Premium Video</h4>
+                        <button class="cta-btn" onclick="document.getElementById('payment-modal').style.display='flex'; document.body.style.overflow='hidden';">Unlock with PRO</button>
+                    </div>
+                `;
+            } else {
+                videoWrapperContent = `<iframe src="https://www.youtube.com/embed/${video.youtube_id}" title="${video.title}" allowfullscreen></iframe>`;
+            }
+
             card.innerHTML = `
                 <div class="video-wrapper">
-                    <iframe src="https://www.youtube.com/embed/${video.youtube_id}" title="${video.title}" allowfullscreen></iframe>
+                    ${videoWrapperContent}
                 </div>
                 <div class="video-info">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                         <span class="video-category">${video.category.replace(/_/g, ' ')}</span>
+                         <span class="video-category">${video.category.replace(/_/g, ' ')} ${video.is_premium ? '<span style="color:#ff4757; font-size:0.75rem; margin-left:0.5rem;"><i data-lucide="gem" style="width:12px; height:12px; display:inline-block; vertical-align:middle;"></i> PRO</span>' : ''}</span>
                          <div style="display: flex; gap: 0.5rem;">
                              <button class="watch-btn ${isWatched}" data-vid="${video.id}">
                                   <i data-lucide="check-circle" class="check-icon"></i> <span class="watch-text">${isWatched ? 'Completed' : 'Mark Watched'}</span>
@@ -376,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateProgress() {
-        if (window.currentCategory === 'All' || window.currentCategory === 'PREMIUM PRO') {
+        if (window.currentCategory === 'All') {
             progressSection.style.display = 'none';
             return;
         }
@@ -464,15 +463,356 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('eduYodhaPro', 'true');
                 paymentModal.style.display = 'none';
                 document.body.style.overflow = 'auto';
-                alert("Payment Successful! You are now an EDU YODHA PRO member. 'PREMIUM PRO' category unlocked!");
+                alert("Payment Successful! You are now an EDU YODHA PRO member. Premium videos unlocked!");
                 location.reload();
             }, 1500);
         });
     }
 
+    // AI Mock Test Logic
+    const aiTestModal = document.getElementById('ai-test-modal');
+    const closeAiTestModal = document.getElementById('close-ai-test-modal');
+    const testSubjectTitle = document.getElementById('test-subject-title');
+    const chapterInput = document.getElementById('chapter-input');
+    const mockNameInput = document.getElementById('mock-name-input');
+    const generateTestBtn = document.getElementById('generate-test-btn');
+    
+    const testSetupPhase = document.getElementById('test-setup-phase');
+    const testLoadingPhase = document.getElementById('test-loading-phase');
+    const testActivePhase = document.getElementById('test-active-phase');
+    const testResultsPhase = document.getElementById('test-results-phase');
+
+    const questionTracker = document.getElementById('question-tracker');
+    const testTimer = document.getElementById('test-timer');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    
+    const testScoreDisplay = document.getElementById('test-score-display');
+    const testExplanations = document.getElementById('test-explanations');
+
+    let currentTestSubject = '';
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let currentScore = 0;
+    let selectedOption = null;
+    let timerInterval = null;
+
+    document.querySelectorAll('.mock-subject-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            currentTestSubject = e.target.dataset.subject;
+            testSubjectTitle.innerText = `KCET ${currentTestSubject} Test`;
+            chapterInput.value = '';
+            const savedName = localStorage.getItem('eduYodhaStudentName');
+            if (savedName && mockNameInput) mockNameInput.value = savedName;
+            
+            testSetupPhase.style.display = 'block';
+            testLoadingPhase.style.display = 'none';
+            testActivePhase.style.display = 'none';
+            testResultsPhase.style.display = 'none';
+            
+            aiTestModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    if(closeAiTestModal) {
+        closeAiTestModal.addEventListener('click', () => {
+            aiTestModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            clearInterval(timerInterval);
+        });
+    }
+
+    generateTestBtn.addEventListener('click', async () => {
+        const chapter = chapterInput.value.trim() || "Mixed Important Topics";
+        const mockName = mockNameInput.value.trim();
+        
+        if (!mockName) return alert("Please enter your name for the certificate before starting.");
+        localStorage.setItem('eduYodhaStudentName', mockName);
+        
+        testSetupPhase.style.display = 'none';
+        testLoadingPhase.style.display = 'block';
+
+        try {
+            const response = await fetch('/api/mocktest/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject: currentTestSubject, chapter })
+            });
+
+            if (!response.ok) throw new Error("API Error");
+            
+            const data = await response.json();
+            if (!Array.isArray(data) || data.length === 0) throw new Error("Invalid format");
+
+            currentQuestions = data;
+            currentQuestionIndex = 0;
+            currentScore = 0;
+            
+            testLoadingPhase.style.display = 'none';
+            testActivePhase.style.display = 'block';
+            
+            startTimer(60 * 60); // 60 minutes
+            renderQuestion();
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to generate questions. Please check your API key or try again.");
+            testLoadingPhase.style.display = 'none';
+            testSetupPhase.style.display = 'block';
+        }
+    });
+
+    function startTimer(duration) {
+        clearInterval(timerInterval);
+        let timer = duration;
+        testTimer.innerText = formatTime(timer);
+        
+        timerInterval = setInterval(() => {
+            timer--;
+            testTimer.innerText = formatTime(timer);
+            if (timer <= 0) {
+                clearInterval(timerInterval);
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function renderQuestion() {
+        const q = currentQuestions[currentQuestionIndex];
+        questionTracker.innerText = `Question ${currentQuestionIndex + 1}/${currentQuestions.length}`;
+        questionText.innerText = q.question;
+        
+        optionsContainer.innerHTML = '';
+        selectedOption = null;
+        nextQuestionBtn.disabled = true;
+
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.style.cssText = 'padding: 10px 15px; text-align: left; background: #ffffff; color: #000000; border: 2px solid #ccc; border-radius: 8px; cursor: pointer; transition: 0.2s;';
+            btn.innerText = opt;
+            
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    b.style.borderColor = '#ccc';
+                    b.style.background = '#ffffff';
+                });
+                btn.style.borderColor = 'var(--primary)';
+                btn.style.background = 'rgba(107, 70, 193, 0.1)';
+                selectedOption = opt;
+                nextQuestionBtn.disabled = false;
+            });
+            
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    nextQuestionBtn.addEventListener('click', () => {
+        if (!selectedOption) return;
+        
+        const q = currentQuestions[currentQuestionIndex];
+        // Track whether user was correct
+        q.userCorrect = (selectedOption === q.answer);
+        if (q.userCorrect) currentScore++;
+
+        currentQuestionIndex++;
+        
+        if (currentQuestionIndex < currentQuestions.length) {
+            renderQuestion();
+        } else {
+            finishTest();
+        }
+    });
+
+    function finishTest() {
+        clearInterval(timerInterval);
+        testActivePhase.style.display = 'none';
+        testResultsPhase.style.display = 'block';
+        
+        testScoreDisplay.innerText = `${currentScore} / ${currentQuestions.length}`;
+        
+        testExplanations.innerHTML = '';
+        currentQuestions.forEach((q, i) => {
+            const item = document.createElement('div');
+            item.style.marginBottom = '1rem';
+            item.style.padding = '1rem';
+            item.style.background = q.userCorrect ? 'rgba(46, 213, 115, 0.1)' : 'rgba(255, 71, 87, 0.1)';
+            item.style.borderLeft = `4px solid ${q.userCorrect ? '#2ed573' : '#ff4757'}`;
+            item.innerHTML = `
+                <p><strong>Q${i+1}: ${q.question}</strong></p>
+                <p style="color: ${q.userCorrect ? '#2ed573' : '#ff4757'}; font-weight:bold;">Your Answer: ${q.userCorrect ? 'Correct' : 'Incorrect (Correct: ' + q.answer + ')'}</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;"><em>Explanation:</em> ${q.explanation}</p>
+            `;
+            testExplanations.appendChild(item);
+        });
+        
+        if(window.confetti && currentScore >= currentQuestions.length / 2) {
+            confetti({ particleCount: 200, spread: 120, origin: { y: 0.3 } });
+        }
+        
+        // Auto-generate certificate
+        const finalName = localStorage.getItem('eduYodhaStudentName') || 'Student';
+        setTimeout(() => {
+            if(certModal) {
+                certModal.style.display = 'flex';
+                namePromptSection.style.display = 'none';
+                certStudentName.innerText = finalName;
+                certPlaylistName.innerText = `KCET ${currentTestSubject} Mock Test`;
+                certDisplaySection.style.display = 'block';
+                if(window.confetti) confetti({ particleCount: 200, spread: 120, origin: { y: 0.3 } });
+            }
+        }, 1500);
+    }
+
+    // Auth Logic
+    const authNavBtn = document.getElementById('auth-nav-btn');
+    const authModal = document.getElementById('auth-modal');
+    const closeAuthModal = document.getElementById('close-auth-modal');
+    const authTitle = document.getElementById('auth-title');
+    const registerFields = document.getElementById('register-fields');
+    const authName = document.getElementById('auth-name');
+    const authEmail = document.getElementById('auth-email');
+    const authPassword = document.getElementById('auth-password');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const authToggleText = document.getElementById('auth-toggle-text');
+    const authToggleLink = document.getElementById('auth-toggle-link');
+    const authErrorMessage = document.getElementById('auth-error-message');
+
+    let isLoginMode = true;
+
+    if (authNavBtn) {
+        authNavBtn.addEventListener('click', () => {
+            const token = localStorage.getItem('eduYodhaToken');
+            if (token) {
+                // Logout
+                localStorage.removeItem('eduYodhaToken');
+                localStorage.removeItem('eduYodhaPro');
+                localStorage.removeItem('eduYodhaStudentName');
+                alert("Logged out successfully");
+                location.reload();
+            } else {
+                authModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        });
+    }
+
+    if (closeAuthModal) {
+        closeAuthModal.addEventListener('click', () => {
+            authModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            authErrorMessage.style.display = 'none';
+        });
+    }
+
+    if (authToggleLink) {
+        authToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            authErrorMessage.style.display = 'none';
+            if (isLoginMode) {
+                authTitle.innerText = "Sign In";
+                registerFields.style.display = "none";
+                authSubmitBtn.innerText = "Login";
+                authToggleText.innerText = "Don't have an account?";
+                authToggleLink.innerText = "Sign Up";
+            } else {
+                authTitle.innerText = "Create Account";
+                registerFields.style.display = "block";
+                authSubmitBtn.innerText = "Sign Up";
+                authToggleText.innerText = "Already have an account?";
+                authToggleLink.innerText = "Sign In";
+            }
+        });
+    }
+
+    if (authSubmitBtn) {
+        authSubmitBtn.addEventListener('click', async () => {
+            const email = authEmail.value.trim();
+            const password = authPassword.value.trim();
+            const name = authName.value.trim();
+
+            if (!email || !password || (!isLoginMode && !name)) {
+                authErrorMessage.innerText = "Please fill all fields.";
+                authErrorMessage.style.display = "block";
+                return;
+            }
+
+            authSubmitBtn.innerText = "Processing...";
+            authSubmitBtn.disabled = true;
+
+            const url = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+            const body = isLoginMode ? { email, password } : { name, email, password };
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || "Authentication failed");
+
+                localStorage.setItem('eduYodhaToken', data.token);
+                localStorage.setItem('eduYodhaStudentName', data.user.name);
+                if (data.user.is_pro) {
+                    localStorage.setItem('eduYodhaPro', 'true');
+                }
+                
+                authModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                location.reload();
+            } catch (err) {
+                authErrorMessage.innerText = err.message;
+                authErrorMessage.style.display = "block";
+                authSubmitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+                authSubmitBtn.disabled = false;
+            }
+        });
+    }
+
+    async function checkAuth() {
+        const token = localStorage.getItem('eduYodhaToken');
+        if (token) {
+            try {
+                const res = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    authNavBtn.innerHTML = `<i data-lucide="user-check"></i> ${data.user.name} (Logout)`;
+                    localStorage.setItem('eduYodhaStudentName', data.user.name);
+                    if (data.user.is_pro) {
+                        localStorage.setItem('eduYodhaPro', 'true');
+                        if (goproBtn) {
+                            goproBtn.innerHTML = '<i data-lucide="check-circle"></i> PRO ACTIVE';
+                            goproBtn.style.pointerEvents = 'none';
+                        }
+                    }
+                } else {
+                    // Token expired or invalid
+                    localStorage.removeItem('eduYodhaToken');
+                    localStorage.removeItem('eduYodhaPro');
+                }
+            } catch (err) {
+                console.error("Auth check failed");
+            }
+        }
+    }
+
     if (searchInput) searchInput.addEventListener('input', applyFilters);
     if (filterDropdown) filterDropdown.addEventListener('change', applyFilters);
 
+    checkAuth();
     loadCategories();
     loadVideos();
 });
